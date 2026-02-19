@@ -6,8 +6,8 @@ void removeBad(list<Movie*>& li)
             Movie* toBeErased = *q;
             q = li.erase(q);
             delete toBeErased;
+        } else {
+            ++q;
         }
-            
-        ++q;
     }
 }

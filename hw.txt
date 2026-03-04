@@ -1,0 +1,214 @@
+# hw 4
+
+Due Date: March 4, 2026
+Subject: Computer Science
+
+# question 1
+
+- code
+    
+    ```cpp
+    #include <iostream>
+    #include <vector>
+    #include <list>
+    using namespace std;
+    
+    const int MAGIC = 11223344;
+    
+    void test()
+    {
+        bool allValid = true;
+    
+        vector<int> v1(5, MAGIC);
+        int k = 0;
+        for ( ; k != v1.size(); k++)
+        {
+            if (v1[k] != MAGIC)
+            {
+                cout << "v1[" << k << "] is " << v1[k] << ", not " << MAGIC <<"!" << endl;
+                allValid = false;
+            }
+            if (k == 2)
+            {
+                for (int i = 0; i < 5; i++)
+                    v1.push_back(MAGIC);
+            }
+        }
+        if (allValid  &&  k == 10)
+            cout << "Passed test 1" << endl;
+        else
+            cout << "Failed test 1" << endl;
+    
+        allValid = true;
+        list<int> l1(5, MAGIC);
+        k = 0;
+        for (list<int>::iterator p = l1.begin(); p != l1.end(); p++, k++)
+        {
+            if (*p != MAGIC)
+            {
+                cout << "Item# " << k << " is " << *p << ", not " << MAGIC <<"!" << endl;
+                allValid = false;
+            }
+            if (k == 2)
+            {
+                for (int i = 0; i < 5; i++)
+                    l1.push_back(MAGIC);
+            }
+        }
+        if (allValid  &&  k == 10)
+            cout << "Passed test 2" << endl;
+        else
+            cout << "Failed test 2" << endl;
+    
+        allValid = true;
+        vector<int> v2(5, MAGIC);
+        k = 0;
+        for (vector<int>::iterator p = v2.begin(); p != v2.end(); p++, k++)
+        {
+            if (k >= 20)  // prevent infinite loop
+                break;
+            if (*p != MAGIC)
+            {
+                cout << "Item# " << k << " is " << *p << ", not " << MAGIC <<"!" << endl;
+                allValid = false;
+            }
+            if (k == 2)
+            {
+                for (int i = 0; i < 5; i++)
+                    v2.push_back(MAGIC);
+            }
+        }
+        if (allValid  &&  k == 10)
+            cout << "Passed test 3" << endl;
+        else
+            cout << "Failed test 3" << endl;
+    }
+    
+    int main()
+    {
+        test();
+    }
+    ```
+    
+- answer
+    1. Test 3 fails because the `vector` iterates through an iterator. `push_back` causes the iterators in a `vector` to reallocate, causing undefined behavior.
+
+# question 3
+
+- code
+    
+    ```cpp
+        #include "Map.h"  // class template from problem 2
+    
+        class Coord
+        {
+          public:
+            Coord(double r, double c) : m_r(r), m_c(c) {}
+            double r() const { return m_r; }
+            double c() const { return m_c; }
+          private:
+            double m_r;
+            double m_c;
+        };
+    
+        int main()
+        {
+            Map<int, double> mid;
+            mid.insert(42, -1.25);         // OK
+            Map<Coord, int> mpi;
+    		    mpi.insert(Coord(40,10), 32);  // error!
+    	}
+    ```
+    
+- Explain in a sentence or two why the call to `Map<Coord, int>::insert` causes at least one compilation error.
+    
+    When Map inserts a new element, it keeps itself in a sorted order. Because the class `Coord` doesn’t define its own `<` definition, `insert` won’t know which order to insert `Coord`, causing a compilation error
+    
+
+# question 4
+
+- We introduced the two-parameter overload of `listAll`. Why could you not solve this problem given the constraints in part a if we had only a one-parameter `listAll`, and you had to implement *it* as the recursive function?
+    
+    You need the recursive function in order to remember the past labels to build up the path string that makes up the entire domain name.
+    
+
+# question 5
+
+- part a) What is the time complexity?
+    
+    The time complexity is $O(N^3)$ because there is a three-level nested loop. Inside each nested loop, the time complexity is constant. Therefore, the highest order time complexity must be $O(N^3)$. 
+    
+- part b) What is the time complexity?
+    
+    The time complexity is still $O(N^3)$. The number of pairs that `i` and `j` make is equal to $\frac{N}{2} \cdot (N-1) = \frac{N^2}{2}-\frac{N}{2}$. Because we know that `k` must iterate $N$ times, the order must be $\frac{N^3}{2}-\frac{N^2}{2}$. We take the highest order and drop the constant, so the answer is $O(N^3)$
+    
+
+# question 6
+
+- code
+    
+    ```cpp
+    void reassign(const Map& m, Map& result)
+    {
+          // Guard against the case that result is an alias for m (i.e., that
+          // result is a reference to the same map that m refers to) by building
+          // the answer in a local variable res.  When done, swap res with result;
+          // the old value of result (now in res) will be destroyed when res is
+          // destroyed.
+    
+        Map res;
+    
+        if (!m.empty())
+        {
+            KeyType prevKey;
+            ValueType value0;
+    
+              // Get pair 0, which must succeed since m is not empty
+    
+            m.get(0, prevKey, value0);
+    
+              // For each pair i after pair 0, insert into res a pair with
+              // pair i-1's key and pair i's value.  (This loop executes 0 times
+              // if m has only one pair.)
+    
+            for (int i = 1; i < m.size(); i++)
+            {
+                KeyType k;
+                ValueType v;
+                m.get(i, k, v);
+                res.insert(prevKey, v);
+                prevKey = k;
+            }
+    
+              // Insert a final pair with last pair's key and pair 0's value.
+    
+            res.insert(prevKey, value0);
+        }
+    
+        result.swap(res);
+    }
+    ```
+    
+- part a) what is the time complexity?
+    
+    The time complexity is $O(N^2)$. `get` outside the loop will execute $\frac{N}{2}$ times. Inside the loop, `findFirstAtLeast` visits all the nodes until it finds where key is. The result there is $O(N)$ for one iteration. The `for` loop of `reassign` iterates $N-1$ times, so the result is $N(N-1)$. The last insert adds $O(N)$, and `swap` is $O(1)$. Therefore, the highest time complexity must be $N^2$.
+    
+- code
+    
+    ```cpp
+    void Map::reassign()
+    {
+        Node* p = m_head->m_next;
+        if (p != m_head)
+        {
+            ValueType value0 = p->m_value;
+    				for ( ; p->m_next != m_head; p = p->m_next)
+    				    p->m_value = p->m_next->m_value;
+            p->m_value = value0;
+        }
+    }
+    ```
+    
+- part b) Assume that `*this` has N elements. In terms of the number of linked list nodes visited during the execution of this function, what is its time complexity? Why? Is it the same, better, or worse, than the implementation in part a?
+    
+    The time complexity is $O(N)$. This implementation is much better than the one in part a because it only has one for loop that iterates for a constant N times. The one in part a visited `insert` while in a for loop, increasing the time complexity to $N^2$.
